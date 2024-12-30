@@ -1,45 +1,36 @@
 import pandas as pd
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.preprocessing import StandardScaler
 
-def load_dataset(filepath):
+def load_and_explore_data(filepath):
     # Load the dataset from the given filepath
     return pd.read_csv(filepath)
 
-def preprocess_data(df):
-    # Select reasonable features for the models
-    selected_features = ['Age', 'Height', 'Weight', 'Sex', 'Sport', 'Event', 'region']
-    df = df[selected_features]
-    
-    # Separate numeric and string features
-    numeric_features = df.select_dtypes(include=['int64', 'float64'])
-    string_features = df.select_dtypes(include=['object'])
-    
-    # Handle missing values
-    numeric_features.ffill(inplace=True)
-    string_features.ffill(inplace=True)
-    
-    # Scale numeric features
-    scaler = StandardScaler()
-    numeric_features_scaled = scaler.fit_transform(numeric_features)
-    
-    # Encode string features
-    encoder = OneHotEncoder(sparse_output=False)
-    string_features_encoded = encoder.fit_transform(string_features)
-    
-    # Combine numeric and encoded string features
-    preprocessed_df = pd.concat([
-        pd.DataFrame(numeric_features_scaled, columns=numeric_features.columns),
-        pd.DataFrame(string_features_encoded, columns=encoder.get_feature_names_out(string_features.columns))
-    ], axis=1)
-    
-    return preprocessed_df
+def preprocess_data():
+    print("Loading datasets...")
+    athlete_events = pd.read_csv('data/athlete_events.csv')
+    noc_regions = pd.read_csv('data/noc_regions.csv')
+    print(f"Datasets loaded: {len(athlete_events)} athlete events, {len(noc_regions)} NOC regions.\n")
 
-def merge_datasets(athlete_events_path, noc_regions_path):
-    # Load datasets
-    athlete_events = pd.read_csv(athlete_events_path)
-    noc_regions = pd.read_csv(noc_regions_path)
-    
-    # Merge datasets on 'NOC' column
-    merged_df = pd.merge(athlete_events, noc_regions, on='NOC', how='left')
-    
-    return merged_df
+    print("Merging datasets...")
+    athlete_events = athlete_events.merge(noc_regions, on='NOC', how='left')
+    print("Datasets merged.\n")
+
+    print("Handling missing values...")
+    athlete_events['Age'] = athlete_events['Age'].fillna(athlete_events['Age'].mean())
+    athlete_events['Height'] = athlete_events['Height'].fillna(athlete_events['Height'].mean())
+    athlete_events['Weight'] = athlete_events['Weight'].fillna(athlete_events['Weight'].mean())
+    athlete_events['Medal'] = athlete_events['Medal'].fillna('NA')
+    print("Missing values handled.\n")
+
+    print("Encoding categorical columns...")
+    athlete_events_encoded = pd.get_dummies(athlete_events, columns=['Sex', 'Season', 'Sport', 'Medal'])
+    print("Encoding completed.\n")
+
+    print("Scaling features...")
+    features = athlete_events_encoded[['Age', 'Height', 'Weight']]
+    scaler = StandardScaler()
+    scaled_features = scaler.fit_transform(features)
+    print("Features scaled.\n")
+
+    basket = athlete_events_encoded.iloc[:, -10:]
+    return athlete_events, scaled_features, basket
