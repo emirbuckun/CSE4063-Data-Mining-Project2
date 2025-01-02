@@ -1,0 +1,87 @@
+Starting preprocessing...
+Loading datasets...
+Datasets loaded: 271116 athlete events, 230 NOC regions.
+
+Merging datasets...
+Datasets merged.
+
+Handling missing values...
+Missing values handled.
+
+Encoding categorical columns...
+Encoding completed.
+
+Scaling features...
+Features scaled.
+
+Preprocessing completed.
+
+Constructing frequent pattern mining models...
+Running Apriori algorithm...
+Apriori generated 11 patterns.
+
+Running FP-Growth algorithm...
+FP-Growth generated 11 patterns.
+
+Running ECLAT algorithm...
+ECLAT generated 11 patterns.
+
+Frequent pattern mining completed.
+
+Performing clustering...
+Performing K-Means clustering...
+K-Means clustering completed.
+
+Performing AGNES clustering...
+AGNES clustering completed.
+
+Performing DBSCAN clustering...
+DBSCAN clustering completed.
+
+Clustering completed.
+
+Evaluating models...
+Evaluating Apriori patterns...
+Top Apriori patterns:
+    support               itemsets
+0  0.012556     (Sport_Volleyball)
+1  0.014186     (Sport_Water Polo)
+2  0.014521  (Sport_Weightlifting)
+3  0.026387      (Sport_Wrestling)
+4  0.049038         (Medal_Bronze)
+
+Evaluating FP-Growth patterns...
+Top FP-Growth patterns:
+    support               itemsets
+0  0.853262             (Medal_NA)
+1  0.049322           (Medal_Gold)
+2  0.049038         (Medal_Bronze)
+3  0.048378         (Medal_Silver)
+4  0.014521  (Sport_Weightlifting)
+
+Evaluating ECLAT patterns...
+Top ECLAT patterns:
+            itemsets   support
+0         (Medal_NA)  0.853262
+1       (Medal_Gold)  0.049322
+2     (Medal_Bronze)  0.049038
+3     (Medal_Silver)  0.048378
+4  (Sport_Wrestling)  0.026387
+
+Evaluating K-Means clustering...
+K-Means cluster centers:
+[[ 0.19262646  0.05054792 -0.01535154]
+ [-0.47444935 -1.21915822 -1.12091601]
+ [ 0.02091488  1.34406121  1.41525452]]
+
+Evaluating AGNES clustering...
+AGNES cluster labels: [0 1 2]
+
+Evaluating DBSCAN clustering...
+DBSCAN cluster labels: [-1  0  1  2]
+
+Plotting K-Means clustering...
+Plotting Hierarchical Clustering Dendrogram...
+Evaluation completed.
+
+Program completed successfully.
