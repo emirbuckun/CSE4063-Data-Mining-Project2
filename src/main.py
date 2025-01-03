@@ -7,7 +7,7 @@ import time
 
 def load_and_analyze_data(athlete_events_path='src/athlete_events.csv', 
                          noc_regions_path='src/noc_regions.csv',
-                         sample_size=10000):  # Örneklem boyutu eklendi
+                         sample_size=1000):
     """
     Load and analyze the Olympic Games dataset
     """
@@ -23,13 +23,32 @@ def load_and_analyze_data(athlete_events_path='src/athlete_events.csv',
         print(f"Total number of rows: {len(athlete_events)}")
         print(f"Total number of columns: {len(athlete_events.columns)}")
         
-        # Take a sample for analysis
+        # Take a stratified sample based on Medal
         if sample_size and sample_size < len(athlete_events):
-            print(f"\nTaking a sample of {sample_size} rows for analysis...")
-            athlete_events = athlete_events.sample(n=sample_size, random_state=42)
+            print(f"\nTaking a stratified sample of {sample_size} rows...")
+            sampled_indices = []
+            
+            # Sample from each medal type
+            for medal in athlete_events['Medal'].unique():
+                if pd.isna(medal):
+                    temp_df = athlete_events[athlete_events['Medal'].isna()]
+                else:
+                    temp_df = athlete_events[athlete_events['Medal'] == medal]
+                
+                # Calculate proportion for this medal type
+                prop = len(temp_df) / len(athlete_events)
+                n_samples = int(sample_size * prop)
+                
+                # Sample indices
+                if len(temp_df) > n_samples:
+                    sampled_indices.extend(temp_df.sample(n=n_samples, random_state=42).index)
+                else:
+                    sampled_indices.extend(temp_df.index)
+            
+            athlete_events = athlete_events.loc[sampled_indices]
             print(f"Sample shape: {athlete_events.shape}")
         
-        # Print dataset information for sample
+        # Print dataset information
         print("\nSample Dataset Information:")
         print("-" * 50)
         print("\nColumns and their data types:")
@@ -55,19 +74,6 @@ def load_and_analyze_data(athlete_events_path='src/athlete_events.csv',
         merge_time = time.time() - start_time
         print(f"Merge completed in {merge_time:.2f} seconds")
         
-        # Basic statistics of numeric columns
-        numeric_cols = ['Age', 'Height', 'Weight']
-        print("\nNumeric Columns Statistics:")
-        print(merged_df[numeric_cols].describe())
-        
-        # Sport statistics
-        print("\nTop 10 Sports by number of events:")
-        print(merged_df['Sport'].value_counts().head(10))
-        
-        # Medal statistics
-        print("\nMedal distribution:")
-        print(merged_df['Medal'].value_counts(dropna=False))
-        
         return merged_df
         
     except Exception as e:
@@ -78,13 +84,10 @@ def main():
     try:
         print("Starting Olympic Games Data Mining Analysis...")
         
-        # Sample size için kullanıcıdan input alabiliriz
-        sample_size = 10000  # Örnek boyutu
-        
-        # Load and analyze data with sampling
-        merged_df = load_and_analyze_data(sample_size=sample_size)
+        # Load and analyze data
+        merged_df = load_and_analyze_data()
             
-        print(f"\nPreprocessing data (sample size: {sample_size})...")
+        print("\nPreprocessing data...")
         start_time = time.time()
         preprocessed_df = preprocess_data(merged_df)
         preprocess_time = time.time() - start_time
@@ -100,7 +103,7 @@ def main():
         # Evaluate models
         print("\nEvaluating models...")
         start_time = time.time()
-        evaluate_models(models, preprocessed_df)
+        evaluate_models(models)
         evaluate_time = time.time() - start_time
         print(f"Evaluation completed in {evaluate_time:.2f} seconds")
         
