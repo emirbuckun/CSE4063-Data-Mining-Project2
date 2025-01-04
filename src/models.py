@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from mlxtend.frequent_patterns import apriori, fpgrowth
 from sklearn.cluster import KMeans, AgglomerativeClustering, DBSCAN
-from sklearn.preprocessing import StandardScaler, RobustScaler
+from sklearn.preprocessing import StandardScaler, RobustScaler, MinMaxScaler
 from sklearn.decomposition import PCA
 from sklearn.metrics import silhouette_score
 from sklearn.neighbors import NearestNeighbors
@@ -35,6 +35,8 @@ def create_feature_groups(df):
     combat_sports = ['Boxing', 'Wrestling', 'Judo', 'Taekwondo']
     technical_sports = ['Gymnastics', 'Diving', 'Figure Skating']
     precision_sports = ['Shooting', 'Archery', 'Golf']
+    individual_sports = ['Swimming', 'Athletics', 'Gymnastics', 'Boxing', 
+                        'Wrestling', 'Judo', 'Taekwondo', 'Tennis', 'Golf']
     
     df = df.copy()
     
@@ -44,12 +46,49 @@ def create_feature_groups(df):
     df['is_combat'] = df['Sport'].isin(combat_sports)
     df['is_technical'] = df['Sport'].isin(technical_sports)
     df['is_precision'] = df['Sport'].isin(precision_sports)
+    df['is_individual'] = df['Sport'].isin(individual_sports)
     
     # Create derived features
     df['bmi'] = df['Weight'] / ((df['Height'] / 100) ** 2)
-    df['age_group'] = pd.qcut(df['Age'], q=5, labels=['Very Young', 'Young', 'Middle', 'Mature', 'Senior'])
-    df['height_group'] = pd.qcut(df['Height'], q=5, labels=['Very Short', 'Short', 'Average', 'Tall', 'Very Tall'])
-    df['weight_group'] = pd.qcut(df['Weight'], q=5, labels=['Very Light', 'Light', 'Medium', 'Heavy', 'Very Heavy'])
+    
+    # Yaş kategorileri
+    age_bins = [0, 20, 25, 30, 35, 100]
+    age_labels = ['Genç', 'Genç Yetişkin', 'Yetişkin', 'Tecrübeli', 'Usta']
+    df['age_category'] = pd.cut(df['Age'], bins=age_bins, labels=age_labels)
+    
+    # Boy ve kilo grupları için manuel aralıklar
+    weight_bins = [0, 50, 65, 80, 95, float('inf')]
+    weight_labels = ['Very Light', 'Light', 'Medium', 'Heavy', 'Very Heavy']
+    df['weight_group'] = pd.cut(df['Weight'], bins=weight_bins, labels=weight_labels)
+    
+    height_bins = [0, 165, 175, 185, 195, float('inf')]
+    height_labels = ['Very Short', 'Short', 'Average', 'Tall', 'Very Tall']
+    df['height_group'] = pd.cut(df['Height'], bins=height_bins, labels=height_labels)
+    
+    # BMI kategorileri
+    bmi_bins = [0, 18.5, 25, 30, 100]
+    bmi_labels = ['Underweight', 'Normal', 'Overweight', 'Obese']
+    df['bmi_category'] = pd.cut(df['bmi'], bins=bmi_bins, labels=bmi_labels)
+    
+    # Sporcu başarı metrikleri
+    df['medal_rate'] = df.groupby('Name')['Medal'].transform(lambda x: x.notna().mean())
+    df['gold_rate'] = df.groupby('Name')['Medal'].transform(lambda x: (x == 'Gold').mean())
+    
+    # Deneyim hesaplama
+    df['experience'] = df.groupby('Name')['Year'].transform(lambda x: x.max() - x.min())
+    
+    # Ülke bazlı metrikler
+    df['country_medal_rate'] = df.groupby('NOC')['Medal'].transform(lambda x: x.notna().mean())
+    df['country_gold_rate'] = df.groupby('NOC')['Medal'].transform(lambda x: (x == 'Gold').mean())
+    
+    # Sport difficulty ve performans metrikleri
+    df['sport_difficulty'] = df.groupby('Sport')['Medal'].transform(
+        lambda x: 1 / (x.notna().mean() + 0.01))
+    
+    df['age_efficiency'] = df['medal_rate'] / (df['Age'] + 1)
+    
+    df['fitness_score'] = (df['Height'] * df['Weight']) / \
+                         ((df['Age'] + 1) * df['sport_difficulty'])
     
     return df
 
@@ -59,15 +98,20 @@ def prepare_clustering_data(df):
     df = create_feature_groups(df)
     
     # Select base features
-    numeric_features = ['Age', 'Height', 'Weight', 'bmi']
-    binary_features = ['is_endurance', 'is_team', 'is_combat', 'is_technical', 'is_precision']
-    categorical_features = ['Sex_F', 'Sex_M', 'age_group', 'height_group', 'weight_group']
+    numeric_features = ['Age', 'Height', 'Weight', 'bmi', 'medal_rate', 
+                       'experience', 'gold_rate', 'country_medal_rate', 
+                       'country_gold_rate', 'sport_difficulty', 
+                       'age_efficiency', 'fitness_score']
+    binary_features = ['is_endurance', 'is_team', 'is_combat', 
+                      'is_technical', 'is_precision', 'is_individual']
+    categorical_features = ['Sex_F', 'Sex_M', 'age_category', 
+                          'height_group', 'weight_group', 'bmi_category']
     
     # Prepare feature matrix
     feature_matrix = []
     
     # Add numeric features (scaled)
-    scaler = RobustScaler()  # More robust to outliers than StandardScaler
+    scaler = RobustScaler()
     numeric_data = scaler.fit_transform(df[numeric_features])
     feature_matrix.append(numeric_data)
     
@@ -82,8 +126,12 @@ def prepare_clustering_data(df):
     # Combine all features
     combined_features = np.hstack(feature_matrix)
     
-    # Apply PCA with whitening
-    pca = PCA(n_components=0.95, whiten=True)
+    # Apply MinMaxScaler to all features
+    scaler_all = MinMaxScaler()
+    combined_features = scaler_all.fit_transform(combined_features)
+    
+    # Apply PCA with variance ratio
+    pca = PCA(n_components=0.85)
     data_reduced = pca.fit_transform(combined_features)
     
     print("\nClustering data:")
@@ -99,12 +147,11 @@ def prepare_clustering_data(df):
 
 def find_optimal_dbscan_params(data):
     """Find optimal DBSCAN parameters using nearest neighbors"""
-    # Calculate distances to nearest neighbors
-    nbrs = NearestNeighbors(n_neighbors=3).fit(data)
+    nbrs = NearestNeighbors(n_neighbors=5).fit(data)
     distances, _ = nbrs.kneighbors(data)
-    eps = np.percentile(distances[:, -1], 50)  # Use median
-    min_samples = max(3, len(data) // 30)  # More aggressive min_samples
-    return eps, min_samples
+    eps = np.percentile(distances[:, -1], 75)  # 75. percentil
+    min_samples = 4  # Decreased min_samples
+    return eps*0.7, min_samples
 
 def create_models(df):
     """Create models with improved parameters"""
@@ -123,14 +170,13 @@ def create_models(df):
     
     # Find optimal DBSCAN parameters
     eps, min_samples = find_optimal_dbscan_params(clustering_data)
-    optimal_k = min(5, len(clustering_data) // 20)  # Reasonable number of clusters
     
     print(f"\nClustering parameters:")
-    print(f"K-means clusters: {optimal_k}")
+    print(f"K-means clusters: 5")
     print(f"DBSCAN eps: {eps:.3f}")
     print(f"DBSCAN min_samples: {min_samples}")
     
-    # Prepare pattern mining data with sport-medal combinations
+    # Prepare pattern mining data
     pattern_data = pd.DataFrame()
     
     # Add Sport columns
@@ -141,7 +187,7 @@ def create_models(df):
     for medal in balanced_df['Medal'].unique():
         pattern_data[f'Medal_{medal}'] = (balanced_df['Medal'] == medal)
         
-    # Create combined features (Sport-Medal pairs)
+    # Create combined features
     for sport in balanced_df['Sport'].unique():
         for medal in balanced_df['Medal'].unique():
             pattern_data[f'Sport_{sport}_Medal_{medal}'] = (
@@ -162,14 +208,14 @@ def create_models(df):
             },
             'clustering': {
                 'K-Means': KMeans(
-                    n_clusters=optimal_k,
-                    n_init=20,
+                    n_clusters=5,
+                    n_init=200,
                     random_state=42,
-                    max_iter=500
+                    max_iter=2000
                 ).fit(clustering_data),
                 'AGNES': AgglomerativeClustering(
-                    n_clusters=optimal_k,
-                    linkage='average'
+                    n_clusters=5,
+                    linkage='ward'
                 ).fit(clustering_data),
                 'DBSCAN': DBSCAN(
                     eps=eps,
@@ -180,19 +226,19 @@ def create_models(df):
             'pattern_mining': {
                 'Apriori': apriori(
                     pattern_data, 
-                    min_support=0.05, 
+                    min_support=0.002,
                     use_colnames=True,
-                    max_len=3,
+                    max_len=6,
                     low_memory=True,
                     verbose=0
                 ),
                 'FP-Growth': fpgrowth(
                     pattern_data, 
-                    min_support=0.05, 
+                    min_support=0.002,
                     use_colnames=True,
-                    max_len=3
+                    max_len=6
                 ),
-                'ECLAT': ECLAT(min_support=0.05).fit(pattern_data)
+                'ECLAT': ECLAT(min_support=0.002).fit(pattern_data)
             }
         }
         print("\nModels created successfully")

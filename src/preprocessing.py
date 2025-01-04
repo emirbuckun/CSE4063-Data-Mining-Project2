@@ -11,7 +11,7 @@ def preprocess_data(df):
     print("Starting preprocessing...")
     
     # Select only the most important features
-    selected_features = ['Age', 'Height', 'Weight', 'Sex', 'Sport', 'Medal']
+    selected_features = ['Name', 'Age', 'Height', 'Weight', 'Sex', 'Sport', 'Medal', 'Year', 'NOC']  # Name, Year ve NOC eklendi
     df = df[selected_features].copy()
     
     print(f"\nSelected features: {selected_features}")
@@ -58,7 +58,7 @@ def preprocess_data(df):
     # Combine encoded features with original columns
     final_df = pd.concat([
         encoded_features,
-        df[['Medal', 'Sport']]  # Keep original Medal and Sport columns for pattern mining
+        df[['Name', 'Medal', 'Sport', 'Year', 'NOC']]  # Name, Year ve NOC eklendi
     ], axis=1)
     
     print("\nPreprocessing completed.")
