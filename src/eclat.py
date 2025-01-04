@@ -1,11 +1,11 @@
-from collections import defaultdict
-from typing import List, Set, Dict, Tuple
-import pandas as pd
 import numpy as np
-from time import time
+import pandas as pd
+from collections import defaultdict
+from itertools import combinations
+import time
 
 class ECLAT:
-    def __init__(self, min_support: float = 0.1):
+    def __init__(self, min_support=0.1):
         """
         Initialize ECLAT algorithm
         
@@ -16,162 +16,143 @@ class ECLAT:
         """
         self.min_support = min_support
         self.transaction_count = 0
-        self.min_support_count = 0
-        self.frequent_itemsets = []
+        self.itemsets = []
+        self.item_tids = {}
         self.execution_time = 0
-        
-    def fit(self, df: pd.DataFrame) -> List[Tuple[frozenset, int]]:
+
+    def _create_vertical_database(self, df):
+        """
+        Convert horizontal database to vertical format (item: set of transaction IDs)
+        """
+        tid_dict = defaultdict(set)
+        for idx, row in df.iterrows():
+            for item, val in row.items():
+                if val:  # Only consider True values for boolean data
+                    tid_dict[item].add(idx)
+        return tid_dict
+
+    def _merge_itemsets(self, itemset1, itemset2, tids1, tids2):
+        """
+        Merge two itemsets and their transaction IDs if they share k-1 items
+        """
+        if len(itemset1) == 1 or self._share_prefix(itemset1, itemset2):
+            new_itemset = itemset1 | itemset2
+            new_tids = tids1 & tids2
+            support = len(new_tids) / self.transaction_count
+            if support >= self.min_support:
+                return new_itemset, new_tids
+        return None, None
+
+    def _share_prefix(self, itemset1, itemset2):
+        """
+        Check if two itemsets share the same prefix except last item
+        """
+        if len(itemset1) == 1:
+            return True
+        sorted1 = sorted(list(itemset1)[:-1])
+        sorted2 = sorted(list(itemset2)[:-1])
+        return sorted1 == sorted2
+
+    def _eclat_recursive(self, prefix_itemsets):
+        """
+        Recursive ECLAT implementation
+        """
+        items = list(prefix_itemsets.items())
+        for i in range(len(items)):
+            itemset1, tids1 = items[i]
+            if not isinstance(itemset1, frozenset):
+                itemset1 = frozenset([itemset1])
+            
+            for j in range(i + 1, len(items)):
+                itemset2, tids2 = items[j]
+                if not isinstance(itemset2, frozenset):
+                    itemset2 = frozenset([itemset2])
+                
+                new_itemset, new_tids = self._merge_itemsets(itemset1, itemset2, tids1, tids2)
+                if new_itemset is not None:
+                    self.itemsets.append((new_itemset, len(new_tids)))
+                    new_prefix_itemsets = {new_itemset: new_tids}
+                    self._eclat_recursive(new_prefix_itemsets)
+
+    def fit(self, df):
         """
         Find frequent itemsets using ECLAT algorithm
         
         Parameters:
         -----------
         df : pandas DataFrame
-            Binary transaction data where columns are items and rows are transactions
+            Boolean transaction data where columns are items
             
         Returns:
         --------
-        List[Tuple[frozenset, int]]
-            List of tuples containing frequent itemsets and their support counts
+        list
+            List of tuples (itemset, support_count)
         """
-        start_time = time()
+        start_time = time.time()
         
-        # Initialize parameters
         self.transaction_count = len(df)
-        self.min_support_count = int(self.min_support * self.transaction_count)
+        self.itemsets = []
         
-        # Convert DataFrame to vertical format (item: set of transaction IDs)
-        vertical_db = self._create_vertical_database(df)
+        # Create vertical database
+        item_tids = self._create_vertical_database(df)
         
-        # Find frequent 1-itemsets and their tidsets
-        frequent_items = {
-            frozenset([item]): tidset 
-            for item, tidset in vertical_db.items() 
-            if len(tidset) >= self.min_support_count
-        }
+        # Filter items by minimum support and convert to frozenset
+        prefix_itemsets = {}
+        for item, tids in item_tids.items():
+            support = len(tids) / self.transaction_count
+            if support >= self.min_support:
+                self.itemsets.append((frozenset([item]), len(tids)))
+                prefix_itemsets[item] = tids
         
-        # Store results
-        self.frequent_itemsets = [(itemset, len(tidset)) 
-                                for itemset, tidset in frequent_items.items()]
-        
-        # Find frequent itemsets of size > 1
-        self._eclat(frequent_items)
-        
-        self.execution_time = time() - start_time
+        # Find frequent itemsets recursively
+        self._eclat_recursive(prefix_itemsets)
         
         # Sort by support count and itemset size
-        self.frequent_itemsets.sort(key=lambda x: (-x[1], len(x[0])))
-        return self.frequent_itemsets
-    
-    def _create_vertical_database(self, df: pd.DataFrame) -> Dict[str, Set[int]]:
-        """Convert horizontal database to vertical format"""
-        vertical_db = defaultdict(set)
-        for tid, row in df.iterrows():
-            for item, val in row.items():
-                if val == 1:  # Only consider present items (1s)
-                    vertical_db[item].add(tid)
-        return vertical_db
-    
-    def _eclat(self, frequent_items: Dict[frozenset, Set[int]], k: int = 2):
-        """Recursive ECLAT implementation"""
-        if not frequent_items:
-            return
+        self.itemsets.sort(key=lambda x: (-x[1], len(x[0])))
         
-        # Generate candidate (k+1)-itemsets
-        next_frequent_items = {}
-        items = list(frequent_items.keys())
+        self.execution_time = time.time() - start_time
         
-        for i in range(len(items)):
-            for j in range(i + 1, len(items)):
-                # Get k-1 common items
-                itemset1 = items[i]
-                itemset2 = items[j]
-                if len(itemset1.union(itemset2)) == k:
-                    # Compute intersection of tidsets
-                    new_tidset = frequent_items[itemset1].intersection(frequent_items[itemset2])
-                    
-                    # Check support
-                    if len(new_tidset) >= self.min_support_count:
-                        new_itemset = itemset1.union(itemset2)
-                        next_frequent_items[new_itemset] = new_tidset
-                        self.frequent_itemsets.append((new_itemset, len(new_tidset)))
-        
-        # Recursive call for next level
-        self._eclat(next_frequent_items, k + 1)
-    
-    def get_support(self, itemset: frozenset) -> float:
-        """Get support value for an itemset"""
-        for items, count in self.frequent_itemsets:
+        return self.itemsets
+
+    def get_support(self, itemset):
+        """
+        Get support value for an itemset
+        """
+        if isinstance(itemset, (list, set)):
+            itemset = frozenset(itemset)
+        for items, count in self.itemsets:
             if items == itemset:
                 return count / self.transaction_count
         return 0.0
-    
-    def get_frequent_itemsets_df(self) -> pd.DataFrame:
-        """Return frequent itemsets as a DataFrame"""
+
+    def get_frequent_itemsets_df(self):
+        """
+        Return frequent itemsets as a DataFrame
+        """
         itemsets = []
         supports = []
+        sizes = []
         
-        for itemset, count in self.frequent_itemsets:
+        for itemset, count in self.itemsets:
             itemsets.append(list(itemset))
             supports.append(count / self.transaction_count)
+            sizes.append(len(itemset))
             
         return pd.DataFrame({
             'itemsets': itemsets,
-            'support': supports
-        }).sort_values('support', ascending=False)
+            'support': supports,
+            'size': sizes
+        }).sort_values(['support', 'size'], ascending=[False, True])
 
-def prepare_olympic_data_for_eclat(df: pd.DataFrame) -> pd.DataFrame:
+def prepare_olympic_data_for_eclat(df):
     """
     Prepare Olympic data for ECLAT algorithm
-    
-    Parameters:
-    -----------
-    df : pandas DataFrame
-        Preprocessed Olympic data
-        
-    Returns:
-    --------
-    pandas DataFrame
-        Binary transaction data suitable for ECLAT
     """
-    # Create transactions based on Games and Athletes
-    transactions = df.groupby(['Games', 'Team'])[['Sport', 'Medal']].agg(
-        lambda x: list(x.dropna())
-    ).reset_index()
+    # Create binary columns for Sport and Medal combinations
+    sport_dummies = pd.get_dummies(df['Sport'], prefix='Sport')
+    medal_dummies = pd.get_dummies(df['Medal'].fillna('No_Medal'), prefix='Medal')
     
-    # Create binary columns for each unique Sport-Medal combination
-    all_items = set()
-    for items in transactions.iloc[:, 2:].values.flatten():
-        all_items.update(items)
+    # Combine all binary columns
+    eclat_data = pd.concat([sport_dummies, medal_dummies], axis=1).astype(bool)
     
-    # Create binary DataFrame
-    binary_df = pd.DataFrame(index=transactions.index)
-    for item in all_items:
-        binary_df[str(item)] = transactions.apply(
-            lambda row: 1 if item in row['Sport'] or item in row['Medal'] else 0,
-            axis=1
-        )
-    
-    return binary_df
-
-# Example usage:
-if __name__ == "__main__":
-    # Create sample data
-    data = {
-        'item1': [1, 0, 1, 1, 0],
-        'item2': [1, 1, 0, 1, 1],
-        'item3': [1, 1, 1, 0, 0],
-        'item4': [0, 1, 0, 1, 1]
-    }
-    df = pd.DataFrame(data)
-    
-    # Initialize and run ECLAT
-    eclat = ECLAT(min_support=0.4)
-    frequent_itemsets = eclat.fit(df)
-    
-    # Print results
-    print("\nFrequent Itemsets:")
-    for itemset, support_count in frequent_itemsets:
-        print(f"Items: {list(itemset)}, Support Count: {support_count}")
-    
-    print(f"\nExecution time: {eclat.execution_time:.4f} seconds")
+    return eclat_data

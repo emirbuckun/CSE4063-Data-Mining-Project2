@@ -3,15 +3,11 @@ import numpy as np
 from mlxtend.frequent_patterns import apriori, fpgrowth
 from sklearn.cluster import KMeans, AgglomerativeClustering, DBSCAN
 from sklearn.preprocessing import StandardScaler, RobustScaler
-import pandas as pd
-import numpy as np
-from mlxtend.frequent_patterns import apriori, fpgrowth
-from sklearn.cluster import KMeans, AgglomerativeClustering, DBSCAN
-from sklearn.preprocessing import StandardScaler, RobustScaler
 from sklearn.decomposition import PCA
 from sklearn.metrics import silhouette_score
 from sklearn.neighbors import NearestNeighbors
 from sklearn.utils import resample
+from eclat import ECLAT
 
 def balance_dataset(df):
     """Balance dataset using downsampling"""
@@ -58,7 +54,7 @@ def create_feature_groups(df):
     return df
 
 def prepare_clustering_data(df):
-    """Prepare data for clustering with improved features"""
+    """Prepare data for clustering with improved preprocessing"""
     # Add feature groups
     df = create_feature_groups(df)
     
@@ -102,15 +98,16 @@ def prepare_clustering_data(df):
     return data_reduced
 
 def find_optimal_dbscan_params(data):
-    """Daha agresif parametre seçimi"""
-    nbrs = NearestNeighbors(n_neighbors=3).fit(data)  # Daha az komşu
+    """Find optimal DBSCAN parameters using nearest neighbors"""
+    # Calculate distances to nearest neighbors
+    nbrs = NearestNeighbors(n_neighbors=3).fit(data)
     distances, _ = nbrs.kneighbors(data)
-    eps = np.percentile(distances[:, -1], 50)  # Medyan kullan
-    min_samples = max(3, len(data) // 30)  # Daha küçük min_samples
+    eps = np.percentile(distances[:, -1], 50)  # Use median
+    min_samples = max(3, len(data) // 30)  # More aggressive min_samples
     return eps, min_samples
 
 def create_models(df):
-    """Create models with improved clustering"""
+    """Create models with improved parameters"""
     print("\nCreating models...")
     
     # Balance dataset
@@ -121,9 +118,8 @@ def create_models(df):
     print("\nMedal distribution:")
     print(balanced_df['Medal'].value_counts())
     
-    # Prepare data
+    # Prepare clustering data
     clustering_data = prepare_clustering_data(balanced_df)
-    pattern_data = pd.get_dummies(balanced_df[['Sport', 'Medal']])
     
     # Find optimal DBSCAN parameters
     eps, min_samples = find_optimal_dbscan_params(clustering_data)
@@ -134,34 +130,75 @@ def create_models(df):
     print(f"DBSCAN eps: {eps:.3f}")
     print(f"DBSCAN min_samples: {min_samples}")
     
-    # Create models dictionary
-    models = {
-        'data': {
-            'clustering': clustering_data,
-            'original_df': df,
-            'balanced_df': balanced_df
-        },
-        'clustering': {
-            'K-Means': KMeans(
-                n_clusters=optimal_k,
-                n_init=20,  # More initializations
-                random_state=42
-            ).fit(clustering_data),
-            'AGNES': AgglomerativeClustering(
-                n_clusters=optimal_k,
-                linkage='complete'  # Changed from 'ward' for better separation
-            ).fit(clustering_data),
-            'DBSCAN': DBSCAN(
-                eps=eps,
-                min_samples=min_samples,
-                metric='euclidean'
-            ).fit(clustering_data)
-        },
-        'pattern_mining': {
-            'Apriori': apriori(pattern_data, min_support=0.1, use_colnames=True),
-            'FP-Growth': fpgrowth(pattern_data, min_support=0.1, use_colnames=True)
-        }
-    }
+    # Prepare pattern mining data with sport-medal combinations
+    pattern_data = pd.DataFrame()
     
-    print("\nModels created successfully")
+    # Add Sport columns
+    for sport in balanced_df['Sport'].unique():
+        pattern_data[f'Sport_{sport}'] = (balanced_df['Sport'] == sport)
+        
+    # Add Medal columns
+    for medal in balanced_df['Medal'].unique():
+        pattern_data[f'Medal_{medal}'] = (balanced_df['Medal'] == medal)
+        
+    # Create combined features (Sport-Medal pairs)
+    for sport in balanced_df['Sport'].unique():
+        for medal in balanced_df['Medal'].unique():
+            pattern_data[f'Sport_{sport}_Medal_{medal}'] = (
+                (balanced_df['Sport'] == sport) & 
+                (balanced_df['Medal'] == medal)
+            )
+    
+    # Convert to boolean type
+    pattern_data = pattern_data.astype(bool)
+    
+    # Create models dictionary
+    try:
+        models = {
+            'data': {
+                'clustering': clustering_data,
+                'original_df': df,
+                'balanced_df': balanced_df
+            },
+            'clustering': {
+                'K-Means': KMeans(
+                    n_clusters=optimal_k,
+                    n_init=20,
+                    random_state=42,
+                    max_iter=500
+                ).fit(clustering_data),
+                'AGNES': AgglomerativeClustering(
+                    n_clusters=optimal_k,
+                    linkage='average'
+                ).fit(clustering_data),
+                'DBSCAN': DBSCAN(
+                    eps=eps,
+                    min_samples=min_samples,
+                    metric='euclidean'
+                ).fit(clustering_data)
+            },
+            'pattern_mining': {
+                'Apriori': apriori(
+                    pattern_data, 
+                    min_support=0.05, 
+                    use_colnames=True,
+                    max_len=3,
+                    low_memory=True,
+                    verbose=0
+                ),
+                'FP-Growth': fpgrowth(
+                    pattern_data, 
+                    min_support=0.05, 
+                    use_colnames=True,
+                    max_len=3
+                ),
+                'ECLAT': ECLAT(min_support=0.05).fit(pattern_data)
+            }
+        }
+        print("\nModels created successfully")
+        
+    except Exception as e:
+        print(f"\nError creating models: {str(e)}")
+        raise
+    
     return models
