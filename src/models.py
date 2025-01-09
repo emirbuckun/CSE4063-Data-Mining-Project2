@@ -1,11 +1,10 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
 from mlxtend.frequent_patterns import apriori, fpgrowth
 from sklearn.cluster import KMeans, AgglomerativeClustering, DBSCAN
-from sklearn.preprocessing import StandardScaler, RobustScaler, MinMaxScaler
-from sklearn.decomposition import PCA
-from sklearn.metrics import silhouette_score
+from sklearn.preprocessing import RobustScaler, MinMaxScaler
 from sklearn.neighbors import NearestNeighbors
+from sklearn.decomposition import PCA
 from sklearn.utils import resample
 from eclat import ECLAT
 
@@ -20,9 +19,9 @@ def balance_dataset(df):
     for medal in medal_counts.index:
         medal_df = df[df['Medal'] == medal]
         balanced_df = resample(medal_df, 
-                             replace=False,
-                             n_samples=min_count,
-                             random_state=42)
+                            replace=False,
+                            n_samples=min_count,
+                            random_state=42)
         balanced_dfs.append(balanced_df)
     
     return pd.concat(balanced_dfs)
@@ -51,12 +50,12 @@ def create_feature_groups(df):
     # Create derived features
     df['bmi'] = df['Weight'] / ((df['Height'] / 100) ** 2)
     
-    # Yaş kategorileri
+    # Age categories
     age_bins = [0, 20, 25, 30, 35, 100]
     age_labels = ['Genç', 'Genç Yetişkin', 'Yetişkin', 'Tecrübeli', 'Usta']
     df['age_category'] = pd.cut(df['Age'], bins=age_bins, labels=age_labels)
     
-    # Boy ve kilo grupları için manuel aralıklar
+    # Manuel ranges for weight and height
     weight_bins = [0, 50, 65, 80, 95, float('inf')]
     weight_labels = ['Very Light', 'Light', 'Medium', 'Heavy', 'Very Heavy']
     df['weight_group'] = pd.cut(df['Weight'], bins=weight_bins, labels=weight_labels)
@@ -65,26 +64,27 @@ def create_feature_groups(df):
     height_labels = ['Very Short', 'Short', 'Average', 'Tall', 'Very Tall']
     df['height_group'] = pd.cut(df['Height'], bins=height_bins, labels=height_labels)
     
-    # BMI kategorileri
+    # BMI categories
     bmi_bins = [0, 18.5, 25, 30, 100]
     bmi_labels = ['Underweight', 'Normal', 'Overweight', 'Obese']
     df['bmi_category'] = pd.cut(df['bmi'], bins=bmi_bins, labels=bmi_labels)
     
-    # Sporcu başarı metrikleri
+    # Athlete performance metrics
     df['medal_rate'] = df.groupby('Name')['Medal'].transform(lambda x: x.notna().mean())
     df['gold_rate'] = df.groupby('Name')['Medal'].transform(lambda x: (x == 'Gold').mean())
     
-    # Deneyim hesaplama
+    # Experience calculation
     df['experience'] = df.groupby('Name')['Year'].transform(lambda x: x.max() - x.min())
     
-    # Ülke bazlı metrikler
+    # Metrics based on country
     df['country_medal_rate'] = df.groupby('NOC')['Medal'].transform(lambda x: x.notna().mean())
     df['country_gold_rate'] = df.groupby('NOC')['Medal'].transform(lambda x: (x == 'Gold').mean())
     
-    # Sport difficulty ve performans metrikleri
+    # Sport difficulty and performance score
     df['sport_difficulty'] = df.groupby('Sport')['Medal'].transform(
         lambda x: 1 / (x.notna().mean() + 0.01))
     
+    # Age efficiency and fitness score
     df['age_efficiency'] = df['medal_rate'] / (df['Age'] + 1)
     
     df['fitness_score'] = (df['Height'] * df['Weight']) / \
@@ -99,13 +99,13 @@ def prepare_clustering_data(df):
     
     # Select base features
     numeric_features = ['Age', 'Height', 'Weight', 'bmi', 'medal_rate', 
-                       'experience', 'gold_rate', 'country_medal_rate', 
-                       'country_gold_rate', 'sport_difficulty', 
-                       'age_efficiency', 'fitness_score']
+                        'experience', 'gold_rate', 'country_medal_rate', 
+                        'country_gold_rate', 'sport_difficulty', 
+                        'age_efficiency', 'fitness_score']
     binary_features = ['is_endurance', 'is_team', 'is_combat', 
-                      'is_technical', 'is_precision', 'is_individual']
+                        'is_technical', 'is_precision', 'is_individual']
     categorical_features = ['Sex_F', 'Sex_M', 'age_category', 
-                          'height_group', 'weight_group', 'bmi_category']
+                            'height_group', 'weight_group', 'bmi_category']
     
     # Prepare feature matrix
     feature_matrix = []

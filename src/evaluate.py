@@ -1,7 +1,5 @@
 import numpy as np
-import pandas as pd
 from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bouldin_score
-from sklearn.cluster import KMeans, AgglomerativeClustering, DBSCAN
 
 def evaluate_pattern_mining(name, model, df):
     """

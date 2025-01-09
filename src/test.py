@@ -1,11 +1,11 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
 from preprocessing import preprocess_data
 from models import create_models, prepare_data_for_clustering
 from evaluate import evaluate_models
 from visualization import (plot_clustering_results, plot_pattern_mining_results,
-                         plot_feature_distributions, plot_correlation_matrix,
-                         generate_analysis_report)
+                            plot_feature_distributions, plot_correlation_matrix,
+                            generate_analysis_report)
 
 def create_sample_data():
     """Create sample dataset for testing"""
@@ -36,7 +36,7 @@ def create_sample_data():
     return df
 
 def test_pipeline():
-    """Test tüm veri madenciliği pipeline'ını"""
+    """Test the entire data mining pipeline"""
     print("Starting tests...\n")
     
     # Create sample data

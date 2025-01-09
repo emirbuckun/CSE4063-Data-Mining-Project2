@@ -1,8 +1,6 @@
-import numpy as np
+import time
 import pandas as pd
 from collections import defaultdict
-from itertools import combinations
-import time
 
 class ECLAT:
     def __init__(self, min_support=0.1):
