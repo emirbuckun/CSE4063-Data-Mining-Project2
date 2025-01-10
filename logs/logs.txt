@@ -1,0 +1,965 @@
+Starting Olympic Games Data Mining Analysis...
+Loading datasets...
+
+Full Dataset Information:
+--------------------------------------------------
+Total number of rows: 271116
+Total number of columns: 15
+
+Taking a stratified sample of 5000 rows...
+Sample shape: (4998, 15)
+
+Sample Dataset Information:
+--------------------------------------------------
+
+Columns and their data types:
+ID          int64
+Name       object
+Sex        object
+Age       float64
+Height    float64
+Weight    float64
+Team       object
+NOC        object
+Games      object
+Year        int64
+Season     object
+City       object
+Sport      object
+Event      object
+Medal      object
+dtype: object
+
+Missing values:
+ID           0
+Name         0
+Sex          0
+Age        163
+Height    1113
+Weight    1178
+Team         0
+NOC          0
+Games        0
+Year         0
+Season       0
+City         0
+Sport        0
+Event        0
+Medal     4266
+dtype: int64
+
+Sample of unique values in key columns:
+
+Sport unique values: 59
+Sample values: ['Alpine Skiing' 'Art Competitions' 'Hockey' 'Shooting' 'Athletics']
+
+Event unique values: 562
+Sample values: ["Alpine Skiing Men's Slalom" 'Art Competitions Mixed Painting'
+ "Hockey Men's Hockey"
+ "Shooting Men's Small-Bore Rifle, Standing, 50 metres"
+ "Athletics Women's 20 kilometres Walk"]
+
+Medal unique values: 3
+Sample values: ['Gold' 'Bronze' 'Silver']
+
+NOC unique values: 182
+Sample values: ['TCH' 'FRA' 'SUI' 'ETH' 'ITA']
+
+Memory usage: 2.97 MB
+
+Merging datasets...
+Merge completed in 0.00 seconds
+
+Generating initial dataset visualizations...
+
+Preprocessing data...
+Starting preprocessing...
+
+Selected features: ['Name', 'Age', 'Height', 'Weight', 'Sex', 'Sport', 'Medal', 'Year', 'NOC']
+
+Handling missing values...
+
+Missing values after imputation:
+Name      0
+Age       0
+Height    0
+Weight    0
+Sex       0
+Sport     0
+Medal     0
+Year      0
+NOC       0
+dtype: int64
+
+Encoding categorical variables...
+
+Scaling numeric features...
+
+Preprocessing completed.
+Final dataset shape: (4998, 72)
+Preprocessing completed in 0.02 seconds
+
+Generating feature distributions and correlations...
+
+Creating and evaluating models...
+
+Creating models...
+
+Dataset balance:
+Original size: 4998
+Balanced size: 723
+
+Medal distribution:
+Medal
+Gold      241
+Bronze    241
+Silver    241
+Name: count, dtype: int64
+
+Clustering data:
+Original features: 39
+Selected features:
+- Numeric: 12
+- Binary: 6
+- Categorical: 6
+Reduced dimensions: 7
+Explained variance: 87.28%
+
+Clustering parameters:
+K-means clusters: 5
+DBSCAN eps: 0.087
+DBSCAN min_samples: 4
+
+Models created successfully
+Model creation completed in 1.33 seconds
+
+Generating model visualizations...
+
+Evaluating models...
+
+Pattern Mining Results:
+--------------------------------------------------
+
+Apriori Results:
+Top 10 frequent patterns:
+- Pattern:
+  Medals: ['Bronze']
+  Support: 33.33%
+
+- Pattern:
+  Medals: ['Gold']
+  Support: 33.33%
+
+- Pattern:
+  Medals: ['Silver']
+  Support: 33.33%
+
+- Pattern:
+  Sports: ['Athletics']
+  Support: 12.03%
+
+- Pattern:
+  Sports: ['Swimming']
+  Support: 6.22%
+
+- Pattern:
+  Sports: ['Rowing']
+  Support: 6.22%
+
+- Pattern:
+  Sports: ['Gymnastics']
+  Support: 5.95%
+
+- Pattern:
+  Sports: ['Athletics_Medal_Gold']
+  Medals: ['Sport_Athletics_Gold']
+  Support: 5.81%
+
+- Pattern:
+  Sports: ['Athletics']
+  Medals: ['Gold']
+  Support: 5.81%
+
+- Pattern:
+  Sports: ['Athletics_Medal_Gold']
+  Medals: ['Gold', 'Sport_Athletics_Gold']
+  Support: 5.81%
+
+
+FP-Growth Results:
+Top 10 frequent patterns:
+- Pattern:
+  Medals: ['Gold']
+  Support: 33.33%
+
+- Pattern:
+  Medals: ['Silver']
+  Support: 33.33%
+
+- Pattern:
+  Medals: ['Bronze']
+  Support: 33.33%
+
+- Pattern:
+  Sports: ['Athletics']
+  Support: 12.03%
+
+- Pattern:
+  Sports: ['Swimming']
+  Support: 6.22%
+
+- Pattern:
+  Sports: ['Rowing']
+  Support: 6.22%
+
+- Pattern:
+  Sports: ['Gymnastics']
+  Support: 5.95%
+
+- Pattern:
+  Sports: ['Athletics_Medal_Gold']
+  Medals: ['Gold', 'Sport_Athletics_Gold']
+  Support: 5.81%
+
+- Pattern:
+  Sports: ['Athletics', 'Athletics_Medal_Gold']
+  Medals: ['Sport_Athletics_Gold']
+  Support: 5.81%
+
+- Pattern:
+  Sports: ['Athletics', 'Athletics_Medal_Gold']
+  Medals: ['Gold', 'Sport_Athletics_Gold']
+  Support: 5.81%
+
+
+ECLAT Results:
+Top 10 frequent patterns:
+- Pattern:
+  Medals: ['Gold']
+  Support: 33.33%
+
+- Pattern:
+  Medals: ['Bronze']
+  Support: 33.33%
+
+- Pattern:
+  Medals: ['Silver']
+  Support: 33.33%
+
+- Pattern:
+  Sports: ['Athletics']
+  Support: 12.03%
+
+- Pattern:
+  Sports: ['Rowing']
+  Support: 6.22%
+
+- Pattern:
+  Sports: ['Swimming']
+  Support: 6.22%
+
+- Pattern:
+  Sports: ['Gymnastics']
+  Support: 5.95%
+
+- Pattern:
+  Sports: ['Athletics_Medal_Gold']
+  Medals: ['Sport_Athletics_Gold']
+  Support: 5.81%
+
+- Pattern:
+  Sports: ['Athletics']
+  Medals: ['Gold']
+  Support: 5.81%
+
+- Pattern:
+  Sports: ['Athletics', 'Athletics_Medal_Gold']
+  Medals: ['Sport_Athletics_Gold']
+  Support: 5.81%
+
+
+Clustering Results:
+--------------------------------------------------
+
+K-Means Results:
+Number of clusters: 5
+Silhouette Score: 0.2703
+Calinski-Harabasz Score: 192.9181
+Davies-Bouldin Score: 1.4600
+
+Cluster Distribution:
+Cluster 0: 157 samples (21.7%)
+  Top sports:
+Sport
+Ice Hockey    19
+Volleyball    14
+Sailing       14
+  Medal distribution:
+Medal
+Silver    60
+Bronze    56
+Gold      41
+
+Cluster 1: 104 samples (14.4%)
+  Top sports:
+Sport
+Athletics    41
+Swimming     21
+Rowing       16
+  Medal distribution:
+Medal
+Gold      42
+Silver    33
+Bronze    29
+
+Cluster 2: 196 samples (27.1%)
+  Top sports:
+Sport
+Athletics     21
+Swimming      19
+Gymnastics    18
+  Medal distribution:
+Medal
+Bronze    75
+Silver    62
+Gold      59
+
+Cluster 3: 83 samples (11.5%)
+  Top sports:
+Sport
+Gymnastics    25
+Athletics     25
+Wrestling     14
+  Medal distribution:
+Medal
+Gold      37
+Bronze    26
+Silver    20
+
+Cluster 4: 183 samples (25.3%)
+  Top sports:
+Sport
+Fencing          24
+Shooting         23
+Equestrianism    14
+  Medal distribution:
+Medal
+Silver    66
+Gold      62
+Bronze    55
+
+Cluster Quality:
+- Moderate separation
+
+AGNES Results:
+Number of clusters: 5
+Silhouette Score: 0.2343
+Calinski-Harabasz Score: 173.3831
+Davies-Bouldin Score: 1.4882
+
+Cluster Distribution:
+Cluster 0: 198 samples (27.4%)
+  Top sports:
+Sport
+Ice Hockey    26
+Football      16
+Sailing       14
+  Medal distribution:
+Medal
+Silver    72
+Bronze    65
+Gold      61
+
+Cluster 1: 207 samples (28.6%)
+  Top sports:
+Sport
+Athletics     22
+Swimming      20
+Gymnastics    18
+  Medal distribution:
+Medal
+Bronze    77
+Silver    69
+Gold      61
+
+Cluster 2: 108 samples (14.9%)
+  Top sports:
+Sport
+Athletics     29
+Gymnastics    25
+Wrestling     14
+  Medal distribution:
+Medal
+Gold      45
+Bronze    38
+Silver    25
+
+Cluster 3: 80 samples (11.1%)
+  Top sports:
+Sport
+Athletics    36
+Swimming     19
+Rowing       16
+  Medal distribution:
+Medal
+Gold      35
+Silver    25
+Bronze    20
+
+Cluster 4: 130 samples (18.0%)
+  Top sports:
+Sport
+Shooting         23
+Fencing          23
+Equestrianism    14
+  Medal distribution:
+Medal
+Silver    50
+Bronze    41
+Gold      39
+
+Cluster Quality:
+- Poor separation
+
+DBSCAN Results:
+Number of clusters: 53
+Silhouette Score: 0.5462
+Calinski-Harabasz Score: 40.4269
+Davies-Bouldin Score: 1.0226
+
+Cluster Distribution:
+Cluster 0: 16 samples (2.2%)
+  Top sports:
+Sport
+Athletics    8
+Swimming     8
+  Medal distribution:
+Medal
+Gold    16
+
+Cluster 1: 10 samples (1.4%)
+  Top sports:
+Sport
+Swimming     5
+Athletics    5
+  Medal distribution:
+Medal
+Gold    10
+
+Cluster 2: 15 samples (2.1%)
+  Top sports:
+Sport
+Equestrianism       5
+Art Competitions    3
+Fencing             2
+  Medal distribution:
+Medal
+Gold    15
+
+Cluster 3: 17 samples (2.4%)
+  Top sports:
+Sport
+Sailing     4
+Handball    3
+Canoeing    2
+  Medal distribution:
+Medal
+Gold    17
+
+Cluster 4: 5 samples (0.7%)
+  Top sports:
+Sport
+Rowing     3
+Cycling    2
+  Medal distribution:
+Medal
+Gold    5
+
+Cluster 5: 11 samples (1.5%)
+  Top sports:
+Sport
+Speed Skating           2
+Cross Country Skiing    1
+Alpine Skiing           1
+  Medal distribution:
+Medal
+Gold    11
+
+Cluster 6: 10 samples (1.4%)
+  Top sports:
+Sport
+Weightlifting    3
+Alpine Skiing    1
+Fencing          1
+  Medal distribution:
+Medal
+Gold    10
+
+Cluster 7: 7 samples (1.0%)
+  Top sports:
+Sport
+Gymnastics    7
+  Medal distribution:
+Medal
+Gold    7
+
+Cluster 8: 6 samples (0.8%)
+  Top sports:
+Sport
+Cycling    4
+Rowing     2
+  Medal distribution:
+Medal
+Gold    6
+
+Cluster 9: 14 samples (1.9%)
+  Top sports:
+Sport
+Cross Country Skiing    3
+Alpine Skiing           3
+Sailing                 2
+  Medal distribution:
+Medal
+Gold    14
+
+Cluster 10: 6 samples (0.8%)
+  Top sports:
+Sport
+Cross Country Skiing    4
+Speed Skating           1
+Canoeing                1
+  Medal distribution:
+Medal
+Gold    6
+
+Cluster 11: 9 samples (1.2%)
+  Top sports:
+Sport
+Gymnastics    9
+  Medal distribution:
+Medal
+Gold    9
+
+Cluster 12: 4 samples (0.6%)
+  Top sports:
+Sport
+Weightlifting    2
+Ski Jumping      1
+Speed Skating    1
+  Medal distribution:
+Medal
+Gold    4
+
+Cluster 13: 5 samples (0.7%)
+  Top sports:
+Sport
+Ski Jumping    2
+Canoeing       1
+Triathlon      1
+  Medal distribution:
+Medal
+Gold    5
+
+Cluster 14: 7 samples (1.0%)
+  Top sports:
+Sport
+Athletics    6
+Swimming     1
+  Medal distribution:
+Medal
+Gold    7
+
+Cluster 15: 4 samples (0.6%)
+  Top sports:
+Sport
+Wrestling    3
+Boxing       1
+  Medal distribution:
+Medal
+Gold    4
+
+Cluster 16: 16 samples (2.2%)
+  Top sports:
+Sport
+Cross Country Skiing    3
+Equestrianism           2
+Speed Skating           2
+  Medal distribution:
+Medal
+Bronze    8
+Silver    8
+
+Cluster 17: 20 samples (2.8%)
+  Top sports:
+Sport
+Athletics    11
+Swimming      9
+  Medal distribution:
+Medal
+Bronze    10
+Silver    10
+
+Cluster 18: 23 samples (3.2%)
+  Top sports:
+Sport
+Fencing       4
+Water Polo    3
+Sailing       3
+  Medal distribution:
+Medal
+Bronze    12
+Silver    11
+
+Cluster 19: 13 samples (1.8%)
+  Top sports:
+Sport
+Athletics    10
+Swimming      3
+  Medal distribution:
+Medal
+Bronze    9
+Silver    4
+
+Cluster 20: 11 samples (1.5%)
+  Top sports:
+Sport
+Cycling    6
+Rowing     5
+  Medal distribution:
+Medal
+Silver    6
+Bronze    5
+
+Cluster 21: 10 samples (1.4%)
+  Top sports:
+Sport
+Boxing       6
+Wrestling    4
+  Medal distribution:
+Medal
+Bronze    6
+Silver    4
+
+Cluster 22: 10 samples (1.4%)
+  Top sports:
+Sport
+Gymnastics    10
+  Medal distribution:
+Medal
+Silver    7
+Bronze    3
+
+Cluster 23: 8 samples (1.1%)
+  Top sports:
+Sport
+Gymnastics    8
+  Medal distribution:
+Medal
+Bronze    4
+Silver    4
+
+Cluster 24: 8 samples (1.1%)
+  Top sports:
+Sport
+Diving            5
+Figure Skating    3
+  Medal distribution:
+Medal
+Bronze    6
+Silver    2
+
+Cluster 25: 28 samples (3.9%)
+  Top sports:
+Sport
+Canoeing         8
+Baseball         3
+Speed Skating    3
+  Medal distribution:
+Medal
+Silver    16
+Bronze    12
+
+Cluster 26: 7 samples (1.0%)
+  Top sports:
+Sport
+Hockey        4
+Football      1
+Basketball    1
+  Medal distribution:
+Medal
+Silver    4
+Bronze    3
+
+Cluster 27: 30 samples (4.1%)
+  Top sports:
+Sport
+Sailing       6
+Fencing       5
+Water Polo    4
+  Medal distribution:
+Medal
+Bronze    17
+Silver    13
+
+Cluster 28: 16 samples (2.2%)
+  Top sports:
+Sport
+Ice Hockey    6
+Volleyball    5
+Football      2
+  Medal distribution:
+Medal
+Silver    10
+Bronze     6
+
+Cluster 29: 4 samples (0.6%)
+  Top sports:
+Sport
+Hockey        2
+Volleyball    1
+Ice Hockey    1
+  Medal distribution:
+Medal
+Bronze    3
+Silver    1
+
+Cluster 30: 4 samples (0.6%)
+  Top sports:
+Sport
+Handball         2
+Sailing          1
+Equestrianism    1
+  Medal distribution:
+Medal
+Bronze    3
+Silver    1
+
+Cluster 31: 7 samples (1.0%)
+  Top sports:
+Sport
+Hockey        3
+Football      2
+Volleyball    1
+  Medal distribution:
+Medal
+Silver    4
+Bronze    3
+
+Cluster 32: 9 samples (1.2%)
+  Top sports:
+Sport
+Rowing     6
+Cycling    3
+  Medal distribution:
+Medal
+Bronze    5
+Silver    4
+
+Cluster 33: 20 samples (2.8%)
+  Top sports:
+Sport
+Rhythmic Gymnastics          4
+Short Track Speed Skating    3
+Fencing                      2
+  Medal distribution:
+Medal
+Bronze    15
+Silver     5
+
+Cluster 34: 4 samples (0.6%)
+  Top sports:
+Sport
+Ice Hockey    3
+Hockey        1
+  Medal distribution:
+Medal
+Bronze    4
+
+Cluster 35: 8 samples (1.1%)
+  Top sports:
+Sport
+Rowing     7
+Cycling    1
+  Medal distribution:
+Medal
+Bronze    4
+Silver    4
+
+Cluster 36: 8 samples (1.1%)
+  Top sports:
+Sport
+Athletics    6
+Swimming     2
+  Medal distribution:
+Medal
+Silver    5
+Bronze    3
+
+Cluster 37: 7 samples (1.0%)
+  Top sports:
+Sport
+Rowing     5
+Cycling    2
+  Medal distribution:
+Medal
+Bronze    4
+Silver    3
+
+Cluster 38: 37 samples (5.1%)
+  Top sports:
+Sport
+Fencing          10
+Sailing           5
+Equestrianism     4
+  Medal distribution:
+Medal
+Silver    20
+Bronze    17
+
+Cluster 39: 10 samples (1.4%)
+  Top sports:
+Sport
+Football      5
+Ice Hockey    4
+Hockey        1
+  Medal distribution:
+Medal
+Silver    6
+Bronze    4
+
+Cluster 40: 18 samples (2.5%)
+  Top sports:
+Sport
+Ice Hockey    7
+Football      4
+Volleyball    4
+  Medal distribution:
+Medal
+Silver    10
+Bronze     8
+
+Cluster 41: 6 samples (0.8%)
+  Top sports:
+Sport
+Shooting    5
+Archery     1
+  Medal distribution:
+Medal
+Bronze    4
+Silver    2
+
+Cluster 42: 7 samples (1.0%)
+  Top sports:
+Sport
+Fencing          3
+Equestrianism    2
+Rugby Sevens     1
+  Medal distribution:
+Medal
+Silver    4
+Bronze    3
+
+Cluster 43: 5 samples (0.7%)
+  Top sports:
+Sport
+Wrestling    3
+Taekwondo    1
+Boxing       1
+  Medal distribution:
+Medal
+Bronze    3
+Silver    2
+
+Cluster 44: 5 samples (0.7%)
+  Top sports:
+Sport
+Wrestling    4
+Boxing       1
+  Medal distribution:
+Medal
+Bronze    5
+
+Cluster 45: 11 samples (1.5%)
+  Top sports:
+Sport
+Athletics    6
+Swimming     5
+  Medal distribution:
+Medal
+Bronze    6
+Silver    5
+
+Cluster 46: 15 samples (2.1%)
+  Top sports:
+Sport
+Shooting    14
+Archery      1
+  Medal distribution:
+Medal
+Silver    9
+Bronze    6
+
+Cluster 47: 6 samples (0.8%)
+  Top sports:
+Sport
+Boxing       3
+Wrestling    1
+Judo         1
+  Medal distribution:
+Medal
+Silver    4
+Bronze    2
+
+Cluster 48: 4 samples (0.6%)
+  Top sports:
+Sport
+Football    3
+Hockey      1
+  Medal distribution:
+Medal
+Silver    3
+Bronze    1
+
+Cluster 49: 4 samples (0.6%)
+  Top sports:
+Sport
+Athletics    4
+  Medal distribution:
+Medal
+Bronze    3
+Silver    1
+
+Cluster 50: 5 samples (0.7%)
+  Top sports:
+Sport
+Gymnastics    5
+  Medal distribution:
+Medal
+Silver    5
+
+Cluster 51: 4 samples (0.6%)
+  Top sports:
+Sport
+Cycling    3
+Rowing     1
+  Medal distribution:
+Medal
+Silver    3
+Bronze    1
+
+Cluster 52: 4 samples (0.6%)
+  Top sports:
+Sport
+Handball    4
+  Medal distribution:
+Medal
+Silver    3
+Bronze    1
+
+Cluster Quality:
+- Good separation
+Evaluation completed in 0.07 seconds
+
+Total analysis time: 1.41 seconds
+
+Program completed successfully.

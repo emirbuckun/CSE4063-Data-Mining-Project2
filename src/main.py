@@ -1,80 +1,65 @@
-import pandas as pd
-from mlxtend.frequent_patterns import apriori, fpgrowth
-from sklearn.cluster import KMeans, AgglomerativeClustering, DBSCAN
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import silhouette_score
+import os
+import time
+from models import create_models
+from evaluate import evaluate_models
+from preprocessing import preprocess_data
+from load_analyze import load_and_analyze_data
+from visualization import (plot_dataset_analysis, plot_clustering_results,
+                        plot_pattern_mining_results, plot_feature_distributions,
+                        plot_correlation_matrix, plot_pattern_analysis)
+from logger import set_logger
 
-def load_dataset(filepath):
-    # Load the dataset from the given filepath
-    return pd.read_csv(filepath)
-
-def preprocess_data(df):
-    # Perform data preprocessing steps
-    # Handle missing values, transformations, normalizations, etc.
-    df.fillna(method='ffill', inplace=True)
-    scaler = StandardScaler()
-    df_scaled = scaler.fit_transform(df)
-    return pd.DataFrame(df_scaled, columns=df.columns)
-
-def apriori_model(df):
-    # Construct Apriori model
-    return apriori(df, min_support=0.1, use_colnames=True)
-
-def fpgrowth_model(df):
-    # Construct FP-Growth model
-    return fpgrowth(df, min_support=0.1, use_colnames=True)
-
-def eclat_model(df):
-    # Construct ECLAT model (custom implementation)
-    pass
-
-def kmeans_model(df):
-    # Construct K-Means clustering model
-    kmeans = KMeans(n_clusters=3)
-    kmeans.fit(df)
-    return kmeans
-
-def agnes_model(df):
-    # Construct AGNES clustering model
-    agnes = AgglomerativeClustering(n_clusters=3)
-    agnes.fit(df)
-    return agnes
-
-def dbscan_model(df):
-    # Construct DBSCAN clustering model
-    dbscan = DBSCAN(eps=0.5, min_samples=5)
-    dbscan.fit(df)
-    return dbscan
-
-def evaluate_models(models, df):
-    # Evaluate and compare models
-    for model in models:
-        if isinstance(model, (KMeans, AgglomerativeClustering, DBSCAN)):
-            labels = model.labels_
-            score = silhouette_score(df, labels)
-            print(f'{model.__class__.__name__} Silhouette Score: {score}')
-        else:
-            print(f'{model.__class__.__name__} Model: {model}')
+# Set logger
+set_logger("logs")
 
 def main():
-    # Main function to run the project steps
-    filepath = 'data/athlete_events.csv'
-    df = load_dataset(filepath)
-    df_preprocessed = preprocess_data(df)
-    
-    # Frequent Pattern Mining Models
-    apriori_results = apriori_model(df_preprocessed)
-    fpgrowth_results = fpgrowth_model(df_preprocessed)
-    eclat_results = eclat_model(df_preprocessed)
-    
-    # Clustering Models
-    kmeans = kmeans_model(df_preprocessed)
-    agnes = agnes_model(df_preprocessed)
-    dbscan = dbscan_model(df_preprocessed)
-    
-    # Evaluate Models
-    evaluate_models([kmeans, agnes, dbscan], df_preprocessed)
-    evaluate_models([apriori_results, fpgrowth_results, eclat_results], df_preprocessed)
+    try:
+        print("Starting Olympic Games Data Mining Analysis...")
+        figures_dir = 'results/figures'
+        if not os.path.exists(figures_dir):
+            os.makedirs(figures_dir)
+        merged_df = load_and_analyze_data()
+
+        print("\nGenerating initial dataset visualizations...")
+        plot_dataset_analysis(merged_df, save_path=f'{figures_dir}/dataset_analysis.png')
+        
+        print("\nPreprocessing data...")
+        start_time = time.time()
+        preprocessed_df = preprocess_data(merged_df)
+        preprocess_time = time.time() - start_time
+        print(f"Preprocessing completed in {preprocess_time:.2f} seconds")
+
+        print("\nGenerating feature distributions and correlations...")
+        plot_feature_distributions(preprocessed_df, save_path=f'{figures_dir}/feature_distributions.png')
+        plot_correlation_matrix(preprocessed_df, save_path=f'{figures_dir}/correlation_matrix.png')
+        
+        print("\nCreating and evaluating models...")
+        start_time = time.time()
+        models = create_models(preprocessed_df)
+        model_time = time.time() - start_time
+        print(f"Model creation completed in {model_time:.2f} seconds")
+        
+        print("\nGenerating model visualizations...")
+        plot_clustering_results(models['clustering'], models['data']['clustering'], 
+                                save_path=f'{figures_dir}/clustering_results.png')
+        plot_pattern_mining_results(models['pattern_mining'], 
+                                save_path=f'{figures_dir}/pattern_mining_results.png')
+        plot_pattern_analysis(models['pattern_mining'], 
+                                save_path=f'{figures_dir}/pattern_analysis.png')
+        
+        print("\nEvaluating models...")
+        start_time = time.time()
+        evaluate_models(models)
+        evaluate_time = time.time() - start_time
+        print(f"Evaluation completed in {evaluate_time:.2f} seconds")
+        
+        total_time = preprocess_time + model_time + evaluate_time
+        print(f"\nTotal analysis time: {total_time:.2f} seconds")
+    except Exception as e:
+        print(f"\nError: An issue occurred while running the program:")
+        print(str(e))
+        raise
 
 if __name__ == "__main__":
     main()
+    print("\nProgram completed successfully.")

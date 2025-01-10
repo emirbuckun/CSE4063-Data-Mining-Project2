@@ -8,7 +8,7 @@ It was scraped from [www.sports-reference.com](https://www.sports-reference.com)
 
 ## How to Run
 
-1. Ensure you have the dataset file named "athlete_events.csv" in "data/" directory and all the required dependencies installed. You can install them using:
+1. Ensure you have the dataset files in "data/" directory and all the required dependencies installed. You can install them using:
 
    ```sh
    pip install -r requirements.txt
@@ -26,7 +26,7 @@ It was scraped from [www.sports-reference.com](https://www.sports-reference.com)
 
 ```
 CSE4063-Data-Mining-Project2/
-├── data/                   # Contains the dataset files (ignored by git since its size is large)
+├── data/                   # Contains the dataset files
 │   ├── athlete_events.csv  # Each row corresponds to an individual athlete competing in an individual Olympic event
 │   ├── noc_regions.csv     # Contains NOC (National Olympic Committee 3 letter code) and region equivalents
 ├── src/                    # Source code files
