@@ -62,8 +62,3 @@ cython_debug/
 
 # MacOS
 .DS_Store
-
-# Data files
-data/
-*.csv
-*.json
